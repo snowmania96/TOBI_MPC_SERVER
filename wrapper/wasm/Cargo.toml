@@ -1,0 +1,63 @@
+[package]
+name = "dkls-wasm"
+version = "0.1.1"
+authors = ["Artem Mironov <artem.mironov@gmail.com>"]
+edition = "2021"
+license-file ="../../LICENSE-SLL.md"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["console_error_panic_hook"]
+
+[dependencies]
+getrandom = { version = "0.2", features = ["js"] }
+# tobi-server = { path = "../../" }
+legacy-keyshare = { path = "../../crates/legacy-keyshare" }
+wasm-bindgen = "0.2.95"
+wasm-bindgen-futures = "0.4"
+serde-wasm-bindgen = "0.6.0"
+js-sys = "0.3"
+dkls23 = {workspace = true, default-features = false, features = ["tracing"]}
+simple-setup-msg.workspace = true
+sl-mpc-mate = { workspace = true }
+k256 = { workspace = true }
+rand = { workspace = true }
+hex = "0.4"
+derivation-path = { workspace = true }
+ed25519-dalek = { workspace = true }
+schnorr-relay = { workspace = true , features = ["tracing"] }
+bincode.workspace = true
+futures.workspace = true
+
+# The `console_error_panic_hook` crate provides better debugging of panics by
+# logging them with `console.error`. This is great for development, but requires
+# all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
+# code size when deploying.
+console_error_panic_hook = { version = "0.1.7", optional = true }
+
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+  "AbortController",
+  "AbortSignal",
+  "Crypto",
+  "CryptoKey",
+  "CryptoKeyPair",
+  "SubtleCrypto",
+  # "BinaryType",
+  # "Blob",
+  # "ErrorEvent",
+  # "MessageEvent",
+  # "ProgressEvent",
+  # "WebSocket",
+]
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.34"
+
+# [profile.release]
+# # Tell `rustc` to optimize for small code size.
+# opt-level = "s"

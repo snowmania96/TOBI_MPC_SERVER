@@ -1,0 +1,52 @@
+# fly.toml app configuration file generated for sl-dkls23-passkeys on 2023-11-06T09:13:52Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "sl-dkls23-passkeys"
+primary_region = "ams"
+kill_signal = "SIGINT"
+kill_timeout = "5s"
+
+[env]
+RUST_LOG = "debug"
+BODY_SIZE_LIMIT = "5000000"
+
+[experimental]
+allowed_public_ports = []
+auto_rollback = true
+
+[build]
+
+[processes]
+auth-node-0 = "env PORT=5000 env FIREBASE_CERTIFICATE=/app/auth_server/serviceAccountKey.json python /app/auth_server/node_server.py"
+auth-node-1 = "env PORT=5001 env FIREBASE_CERTIFICATE=/app/auth_server/serviceAccountKey.json python /app/auth_server/node_server.py"
+auth-node-2 = "env PORT=5002 env FIREBASE_CERTIFICATE=/app/auth_server/serviceAccountKey.json python /app/auth_server/node_server.py"
+caddy = "caddy run --config ./demo/Caddyfile"
+dkls-party-0 = "/usr/local/bin/dkls-party serve   --storage /app/data/node-0   --party-key /app/data/party_0_sk   --setup-vk-file /app/data/setup_vk   --coordinator ws://msg-relay.process.sl-dkls23-passkeys.internal:8080/v1/msg-relay   --listen '[::0]:8080'"
+dkls-party-1 = "/usr/local/bin/dkls-party serve --storage /app/data/node-1 --party-key /app/data/party_1_sk --setup-vk-file /app/data/setup_vk --coordinator ws://msg-relay.process.sl-dkls23-passkeys.internal:8080/v1/msg-relay --listen '[::0]:8080'"
+dkls-party-2 = "/usr/local/bin/dkls-party serve --storage /app/data/node-2 --party-key /app/data/party_2_sk --setup-vk-file /app/data/setup_vk --coordinator ws://msg-relay.process.sl-dkls23-passkeys.internal:8080/v1/msg-relay --listen '[::0]:8080' "
+msg-relay = "/usr/local/bin/msg-relay-svc --listen '[::0]:8080'"
+web = "env PORT=8080 HOST='fly-local-6pn' node ./demo/build"
+
+[[services]]
+protocol = "tcp"
+internal_port = 8080
+processes = ["caddy"]
+
+[[services.ports]]
+port = 80
+handlers = ["http"]
+force_https = true
+
+[[services.ports]]
+port = 443
+handlers = ["tls", "http"]
+
+[services.concurrency]
+hard_limit = 2500
+soft_limit = 2000
+
+[[services.tcp_checks]]
+interval = "10s"
+timeout = "10s"

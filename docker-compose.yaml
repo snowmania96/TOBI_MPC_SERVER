@@ -1,0 +1,31 @@
+services:
+  coord:
+    image: tobi-party
+    command: |
+      /usr/local/bin/msg-relay-svc
+    environment:
+      RUST_LOG: debug
+      LISTEN: 0.0.0.0:8080
+    ports:
+      - 8080:8080
+
+  cache:
+    image: redis:latest
+    ports:
+      - 6379:6379
+
+  tobi-server:
+    image: tobi-party
+    command: |
+      /usr/local/bin/tobi-server serve
+        --coordinator ws://coord:8080/v1/msg-relay
+    environment:
+      RUST_LOG: info
+      AUTH_DISABLED: true
+      GCS_DEFAULT_BUCKET: "tobi-testing"
+      GOOGLE_APPLICATION_CREDENTIALS: "credentials.json"
+      REDIS_HOST: "redis://cache:6379"
+    ports:
+      - 8083:8080
+
+

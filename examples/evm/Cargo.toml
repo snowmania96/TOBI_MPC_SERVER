@@ -1,0 +1,18 @@
+[package]
+name = "evm"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ethers = "1.0.2"
+tokio = { version = "1.24.1", features = ["full"] }
+async-trait = "0.1.61"
+k256 = { version = "0.13.0", features = ["serde"] }
+dkls23 = { workspace = true }
+serde_json = "1.0.91"
+hex = "0.4.3"
+rand = "0.8"
+

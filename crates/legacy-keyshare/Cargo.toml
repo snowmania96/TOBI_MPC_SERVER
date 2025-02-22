@@ -1,0 +1,19 @@
+[package]
+name = "legacy-keyshare"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bincode.workspace = true
+k256.workspace = true
+zeroize.workspace = true
+dkls23.workspace = true
+sl-oblivious.workspace = true
+sl-mpc-mate.workspace = true
+schnorr-relay = { workspace = true , features = ["tracing"] }
+
+elliptic-curve = { version = "0.13" }
+serde = { version = "1.0", features = ["derive"] }
+
+[dev-dependencies]
+hex = "0.4"

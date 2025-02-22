@@ -1,0 +1,23 @@
+[package]
+name = "msg-relay-svc"
+version = "0.1.0"
+edition = "2021"
+license-file ="../../LICENSE-SLL.md"
+
+[dependencies]
+msg-relay.workspace = true
+msg-relay-client.workspace = true
+
+futures-util = { workspace = true }
+tokio-tungstenite = { workspace = true }
+
+anyhow = { workspace = true }
+tokio = { workspace = true, features = ["rt", "rt-multi-thread", "macros", "signal"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true , features = ["fmt"]}
+
+dotenvy = "0.15"
+axum = { workspace = true, features = [ "ws", "tokio", "http1" ] }
+tower-http = { workspace = true, features = ["trace", "cors"] }
+xflags = "0.3"
+url = "2.3"

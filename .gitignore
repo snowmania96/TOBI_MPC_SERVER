@@ -1,0 +1,17 @@
+/target
+/Cargo.lock
+**/node_modules
+data
+data1
+data2
+data3
+
+testdata
+
+dkls23_token.txt
+
+**/.DS_Store
+.vscode
+.idea
+.env
+credentials.json
