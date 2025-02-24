@@ -2,6 +2,8 @@ FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
 
 WORKDIR /app
 
+ENV HOST 0.0.0.0
+
 FROM chef AS planner
 COPY . .
 
