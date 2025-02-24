@@ -2,8 +2,6 @@ FROM lukemathwalker/cargo-chef:latest-rust-1 AS chef
 
 WORKDIR /app
 
-ENV HOST 0.0.0.0
-
 FROM chef AS planner
 COPY . .
 
@@ -39,4 +37,7 @@ COPY ./shells/* ./
 ENV PORT=8080
 EXPOSE 8080
 
-CMD /usr/local/bin/tobi-server serve --port 8080
+ARG MSG_RELAY_URL
+ENV MSG_RELAY_URL=${MSG_RELAY_URL}
+
+CMD /usr/local/bin/tobi-server serve --coordinator ${MSG_RELAY_URL} --port 8080
