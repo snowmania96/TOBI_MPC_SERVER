@@ -1,6 +1,3 @@
-// Copyright (c) Silence Laboratories Pte. Ltd. All Rights Reserved.
-// This software is licensed under the Silence Laboratories License Agreement.
-
 use std::{
     env, future::IntoFuture, net::ToSocketAddrs, pin::pin, str::FromStr,
     sync::Arc, time::Duration,
@@ -45,6 +42,9 @@ async fn run_peer(
     )
     .unwrap_or(15);
 
+    // Set a graceful reconnection timeout (e.g., 3500 seconds)
+    let graceful_reconnect_timeout = 250;
+
     let uri = endpoint.uri();
 
     loop {
@@ -67,64 +67,76 @@ async fn run_peer(
         let signal = shutdown();
         let mut signal = pin!(signal);
 
+        // Track the start time of the connection
+        let start_time = tokio::time::Instant::now();
+
         loop {
             tokio::select! {
-                // we must handle signal, otherwise with_graceful_shutdown()
-                // won't allow the service process to finish.
+                // Handle shutdown signal
                 _ = signal.as_mut() => {
                     tracing::info!("got exit signal, close peer connection");
                     let _ = ws.close(None).await;
                     break;
                 }
 
-                // receive an ASK message and proparate it to the peer
+                // Graceful reconnection before timeout
+                _ = sleep(Duration::new(graceful_reconnect_timeout, 0)) => {
+                    tracing::info!("gracefully reconnecting before timeout");
+                    let _ = ws.close(None).await;
+                    break;
+                }
+
+                // Receive an ASK message and propagate it to the peer
                 msg = queue.recv() => {
                     if let Ok(msg) = msg {
                         if ws.send(Message::Binary(msg)).await.is_err() {
                             break;
                         }
                     }
-                },
+                }
 
+                // Handle incoming WebSocket messages
                 msg = ws.next() => {
                     match msg {
                         None => break,
                         Some(Err(err)) => {
                             tracing::error!("peer recv error {err}");
                             break;
-                        },
+                        }
 
-                        // the peer sent us an ASKed message.
+                        // The peer sent us an ASKed message
                         Some(Ok(Message::Binary(msg))) => {
-                            // make sure this is not an ASK message.
+                            // Make sure this is not an ASK message
                             if msg.len() > msg_relay::MESSAGE_HEADER_SIZE {
                                 relay.handle_message(msg, None);
                             }
-                        },
+                        }
 
+                        // Handle ping/pong frames
                         Some(Ok(Message::Pong(_))) => {
                             tracing::debug!("recv pong message");
-                        },
+                        }
 
                         Some(Ok(Message::Ping(_))) => {
                             tracing::debug!("recv ping message");
-                        },
+                        }
 
                         Some(Ok(Message::Close(_))) => {
                             break;
-                        },
+                        }
 
                         _ => {}
                     }
                 }
 
+                // Send ping frames periodically
                 _ = sleep(Duration::new(ping_interval, 0)) => {
                     tracing::debug!("send ping message");
                     if ws.send(Message::Ping(vec![])).await.is_err() {
                         break;
                     }
                 }
-            };
+            }
         }
 
         tracing::info!("close connection to {}", uri);
@@ -137,7 +149,7 @@ async fn health_check() -> &'static str {
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> anyhow::Result<()> {
-    // try to load .env and do not complain if one is not found.
+    // Try to load .env and do not complain if one is not found
     let _ = dotenv();
 
     let flags = MsgRelaySvc::from_env_or_exit();
@@ -169,7 +181,7 @@ async fn main() -> anyhow::Result<()> {
         let (queue, _) = broadcast::channel(peer_queue_size);
 
         // An instance of the MsgRelay that will post all ASK messages
-        // to QUEUE if there is at least one connected peer.
+        // to QUEUE if there is at least one connected peer
         let relay = MsgRelay::new(Some(Box::new({
             let queue = queue.clone();
             move |ask| {
