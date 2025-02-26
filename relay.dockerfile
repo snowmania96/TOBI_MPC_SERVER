@@ -19,7 +19,7 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 
 RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
-RUN cargo build -p tobi-server -p msg-relay-svc --release
+RUN cargo build  -p msg-relay-svc --release
 
 
 FROM debian:bookworm-slim as runtime
@@ -30,7 +30,6 @@ RUN apt-get update;
 RUN apt-get install -y ca-certificates curl jq;
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata;
 
-COPY --from=builder /app/target/release/tobi-server /usr/local/bin/tobi-server
 COPY --from=builder /app/target/release/msg-relay-svc /usr/local/bin/msg-relay-svc
 COPY ./shells/* ./
 
